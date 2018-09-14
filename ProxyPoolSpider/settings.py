@@ -93,5 +93,5 @@ HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
 ############################################################################
 # 自定义配置
 
-SQLITE_FILE = 'ip_pool.db'
-SQLITE_TABLE = 'tb_ip_pool'
+SQLITE_FILE = 'proxy_pool.db'
+SQLITE_TABLE = 'tb_proxy_pool'
