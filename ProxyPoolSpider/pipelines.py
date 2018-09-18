@@ -42,14 +42,17 @@ class ProxyPoolSpiderPipeline(object):
         self.conn.close()
 
     def process_item(self, item, spider):
-        keys = item.fields.keys()
+        keys = list(item.fields.keys())
+        keys.remove('is_available')
         host = item['host']
         port = item['port']
+        is_available = item.pop('is_available')
         cur = self.conn.execute(
             'select count(*) from {0} where host=? and port=?;'.format(
                 self.sqlite_table), (host, port))
         size = cur.fetchone()[0]
-        if size == 0:
+        if size == 0 and is_available == True:
+            spider.log('Insert data: %s' % item)
             insert_sql = "insert into {0}({1}) values ({2})".format(
                 self.sqlite_table,
                 ', '.join(keys),
@@ -63,4 +66,31 @@ class ProxyPoolSpiderPipeline(object):
             except:
                 self.conn.rollback()
                 raise
-        return item
+            return item
+        elif size > 0 and is_available == False:
+            spider.log('Delete data: %s' % item)
+            delete_sql = "delete from {0} where host=? and port=?;".format(
+                self.sqlite_table, )
+            try:
+                self.conn.execute(delete_sql, (host, port))
+                self.conn.commit()
+            except:
+                self.conn.rollback()
+                raise
+        elif size > 0 and is_available == True:
+            spider.log('Update data: %s' % item)
+            update_sql = """\
+                update {0} set {1} where host=? and port=?;""".format(
+                    self.sqlite_table,
+                    ', '.join(['%s=?' % key for key in keys]))
+            values = []
+            for key in keys:
+                values.append(item.get(key))
+            values.extend([host, port])
+            try:
+                self.conn.execute(update_sql, values)
+                self.conn.commit()
+            except:
+                self.conn.rollback()
+                raise
+            return item

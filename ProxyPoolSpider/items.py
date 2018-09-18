@@ -20,3 +20,4 @@ class ProxyPoolSpiderItem(scrapy.Item):
     connect_time = scrapy.Field()
     alive_time   = scrapy.Field()
     verify_time  = scrapy.Field()
+    is_available = scrapy.Field()

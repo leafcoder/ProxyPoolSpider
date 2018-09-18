@@ -18,10 +18,10 @@ class KuaidailiSpider(CrawlSpider):
     ]
     rules = [
         Rule(
-            LinkExtractor(allow=r'free/inha/[1-2]\d?/'),
+            LinkExtractor(allow=r'free/inha/1?\d/$'),
             follow=True, callback='parse_item'),
         Rule(
-            LinkExtractor(allow=r'free/intr/[1-2]\d?/'),
+            LinkExtractor(allow=r'free/intr/1?\d/$'),
             follow=True, callback='parse_item')
     ]
 
@@ -35,6 +35,7 @@ class KuaidailiSpider(CrawlSpider):
             protocal = tds[3].css('::text').extract_first()
             address = tds[4].css('::text').extract_first()
             speed_time = tds[5].css('::text').extract_first()
+            item = ProxyPoolSpiderItem()
             try:
                 requests.get('http://www.baidu.com/',
                     proxies={'http': 'http://%s:%s' % (host, port)},
@@ -42,8 +43,9 @@ class KuaidailiSpider(CrawlSpider):
                 )
             except:
                 self.log('connect to "%s:%s" failed' % (host, port))
-                continue
-            item = ProxyPoolSpiderItem()
+                item['is_available'] = False
+            else:
+                item['is_available'] = True
             item['country'] = country
             item['host'] = host
             item['port'] = port

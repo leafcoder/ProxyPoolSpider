@@ -13,11 +13,11 @@ class XicidailiSpider(CrawlSpider):
     name = 'xicidaili'
     allowed_domains = ['www.xicidaili.com']
     start_urls = [
-        'http://www.xicidaili.com/nn/1', # 国内高匿代理
+        'http://www.xicidaili.com/nn/1' # 国内高匿代理
     ]
     rules = [
         Rule(LinkExtractor(
-            allow=r'nn/[1-2]\d?$'), follow=True, callback='parse_item'),
+            allow=r'nn/1?\d$'), follow=True, callback='parse_item'),
     ]
 
     def parse_item(self, response):
@@ -35,6 +35,7 @@ class XicidailiSpider(CrawlSpider):
                 '.bar_inner::attr(style)').re(r'width:(\d+\%)')[0]
             alive_time = tds[8].css('::text').extract_first()
             verify_time = tds[9].css('::text').extract_first()
+            item = ProxyPoolSpiderItem()
             try:
                 requests.get('http://www.baidu.com/',
                     proxies={'http': 'http://%s:%s' % (host, port)},
@@ -42,8 +43,9 @@ class XicidailiSpider(CrawlSpider):
                 )
             except:
                 self.log('connect to "%s:%s" failed' % (host, port))
-                continue
-            item = ProxyPoolSpiderItem()
+                item['is_available'] = False
+            else:
+                item['is_available'] = True
             item['country'] = country
             item['host'] = host
             item['port'] = port
